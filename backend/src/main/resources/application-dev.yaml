@@ -1,0 +1,20 @@
+# Development profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop  # Dev only: recreate schema on startup
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/myrealm
+
+logging:
+  level:
+    com.hackathon.safenet: DEBUG

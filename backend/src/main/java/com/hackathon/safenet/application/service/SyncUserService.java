@@ -1,0 +1,175 @@
+package com.hackathon.safenet.application.service;
+
+import com.hackathon.safenet.domain.model.User;
+import com.hackathon.safenet.domain.ports.inbound.SyncUserPort;
+import com.hackathon.safenet.domain.ports.outbound.UserRepositoryPort;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
+
+/**
+ * Application service for synchronizing user data between Keycloak and the local database.
+ * 
+ * <p>This service implements the core business logic for user synchronization in the
+ * hexagonal architecture. It serves as the primary use case implementation for handling
+ * user lifecycle events from Keycloak webhooks.</p>
+ * 
+ * <h3>Key Responsibilities</h3>
+ * <ul>
+ *   <li>Synchronize user data from Keycloak to local database</li>
+ *   <li>Handle user creation, updates, and deletion</li>
+ *   <li>Validate business rules and data integrity</li>
+ *   <li>Manage transactional consistency</li>
+ * </ul>
+ * 
+ * <h3>Business Rules</h3>
+ * <ul>
+ *   <li>AuthId must be unique and non-null</li>
+ *   <li>Username must be provided and non-empty</li>
+ *   <li>Email must be valid format when provided</li>
+ *   <li>Additional attributes are stored as JSONB metadata</li>
+ * </ul>
+ * 
+ * <h3>Transaction Management</h3>
+ * <p>All operations are transactional to ensure data consistency. Failed operations
+ * will be rolled back automatically, maintaining database integrity.</p>
+ * 
+ * <h3>Error Handling</h3>
+ * <p>The service provides comprehensive validation and error handling:</p>
+ * <ul>
+ *   <li>Input validation with descriptive error messages</li>
+ *   <li>Database constraint violation handling</li>
+ *   <li>Detailed logging for troubleshooting</li>
+ * </ul>
+ * 
+ * @author SafeNet Development Team
+ * @since 1.0.0
+ * @see com.hackathon.safenet.domain.ports.inbound.SyncUserPort
+ * @see com.hackathon.safenet.domain.model.User
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class SyncUserService implements SyncUserPort {
+
+    private final UserRepositoryPort userRepository;
+
+    /**
+     * Synchronizes user data from Keycloak to the local database.
+     * 
+     * <p>This method implements the core user synchronization logic by either
+     * creating a new user record or updating an existing one based on the
+     * Keycloak authentication ID. It ensures data consistency and applies
+     * business validation rules.</p>
+     * 
+     * <h4>Synchronization Algorithm</h4>
+     * <ol>
+     *   <li>Validate input parameters for required fields and format</li>
+     *   <li>Check if user exists by Keycloak authentication ID</li>
+     *   <li>If user exists: update with new data from Keycloak</li>
+     *   <li>If user doesn't exist: create new user record</li>
+     *   <li>Apply business rules and validation</li>
+     *   <li>Persist changes to database within transaction</li>
+     * </ol>
+     * 
+     * <h4>Data Mapping</h4>
+     * <ul>
+     *   <li>{@code authId} - Keycloak user ID (primary identifier)</li>
+     *   <li>{@code username} - Keycloak username (required)</li>
+     *   <li>{@code email} - User email address (optional)</li>
+     *   <li>{@code firstName} - User first name (optional)</li>
+     *   <li>{@code lastName} - User last name (optional)</li>
+     *   <li>{@code attributes} - Additional user metadata stored as JSONB</li>
+     * </ul>
+     * 
+     * @param authId the Keycloak authentication ID (must be non-null and non-empty)
+     * @param username the username from Keycloak (must be non-null and non-empty)
+     * @param email the user's email address (optional, can be null)
+     * @param firstName the user's first name (optional, can be null)
+     * @param lastName the user's last name (optional, can be null)
+     * @param attributes additional user attributes from Keycloak (stored as JSONB)
+     * @return the synchronized user entity with updated information
+     * @throws IllegalArgumentException if required parameters are null or empty
+     * @throws org.springframework.dao.DataIntegrityViolationException if database constraints are violated
+     * @throws RuntimeException if database operation fails
+     */
+    @Override
+    public User syncUser(
+            String authId,
+            String username,
+            String email,
+            String firstName,
+            String lastName,
+            Map<String, Object> attributes) {
+
+        log.info("Syncing user from Keycloak: authId={}, username={}", authId, username);
+
+        // Find existing user or create new
+        User user = userRepository.findByAuthId(authId)
+                .map(existingUser -> {
+                    log.debug("User exists, updating: {}", authId);
+                    return existingUser.updateFromKeycloak(username, email, firstName, lastName, attributes);
+                })
+                .orElseGet(() -> {
+                    log.debug("User not found, creating new: {}", authId);
+                    return User.createFromKeycloak(authId, username, email, firstName, lastName, attributes);
+                });
+
+        // Business validation
+        if (!user.isValid()) {
+            log.error("Invalid user data: {}", user);
+            throw new IllegalArgumentException("User must have valid data");
+        }
+
+        // Persist (upsert operation)
+        User savedUser = userRepository.save(user);
+
+        log.info("User synced successfully: id={}, authId={}", savedUser.id(), savedUser.authId());
+
+        return savedUser;
+    }
+
+    /**
+     * Deletes a user from the local database based on Keycloak authentication ID.
+     * 
+     * <p>This method handles user deletion events from Keycloak by removing the
+     * corresponding user record from the local database. It ensures data consistency
+     * between Keycloak and the local user store.</p>
+     * 
+     * <h4>Deletion Process</h4>
+     * <ol>
+     *   <li>Validate that the authentication ID is provided</li>
+     *   <li>Check if the user exists in the database</li>
+     *   <li>Remove the user record if found</li>
+     *   <li>Log the operation result</li>
+     * </ol>
+     * 
+     * <p><strong>Note:</strong> This operation is idempotent - calling it multiple
+     * times with the same authId will not cause errors, even if the user has
+     * already been deleted.</p>
+     * 
+     * @param authId the Keycloak authentication ID of the user to delete
+     * @throws IllegalArgumentException if authId is null or empty
+     * @throws RuntimeException if database operation fails
+     */
+    @Override
+    public void deleteUser(String authId) {
+        log.info("Deleting user: authId={}", authId);
+
+        if (authId == null || authId.isBlank()) {
+            throw new IllegalArgumentException("AuthId cannot be null or empty");
+        }
+
+        if (!userRepository.existsByAuthId(authId)) {
+            log.warn("User not found for deletion: {}", authId);
+            return; // Idempotent: already deleted
+        }
+
+        userRepository.deleteByAuthId(authId);
+        log.info("User deleted: authId={}", authId);
+    }
+}
