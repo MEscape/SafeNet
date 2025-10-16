@@ -1,4 +1,4 @@
-package com.hackathon.safenet.infrastructure.adapters.rss;
+package com.hackathon.safenet.infrastructure.adapters.rss.persistance;
 
 import com.hackathon.safenet.domain.ports.outbound.MeteoAlarmFeedPort;
 import lombok.RequiredArgsConstructor;

@@ -2,6 +2,7 @@ package com.hackathon.safenet.infrastructure.adapters.web.controller;
 
 import com.hackathon.safenet.application.service.ninapolice.NinaPoliceService;
 import com.hackathon.safenet.domain.model.ninapolice.NinaPoliceResponse;
+import com.hackathon.safenet.infrastructure.adapters.web.dto.NinaPoliceResponseDto;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +20,12 @@ public class NinaPoliceController {
     private final NinaPoliceService ninaPoliceService;
 
     @GetMapping("/alerts")
-    public ResponseEntity<NinaPoliceResponse> getPoliceAlerts() {
+    public ResponseEntity<NinaPoliceResponseDto> getPoliceAlerts() {
         log.info("Fetching NINA police alerts");
         try {
             NinaPoliceResponse response = ninaPoliceService.getNinaPoliceData();
-            return ResponseEntity.ok(response);
+            NinaPoliceResponseDto dto = NinaPoliceResponseDto.from(response);
+            return ResponseEntity.ok(dto);
         } catch (Exception e) {
             log.error("Error fetching NINA police alerts", e);
             return ResponseEntity.internalServerError().build();

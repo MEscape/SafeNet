@@ -15,10 +15,6 @@ public class NinaPoliceService implements NinaPolicePort {
 
     @Override
     public NinaPoliceResponse getNinaPoliceData() {
-        String jsonData = ninaPoliceFeedPort.fetchFeedContent();
-
-        return NinaPoliceResponse.builder()
-                .items(NinaPoliceParser.parsePoliceData(jsonData))
-                .build();
+        return ninaPoliceFeedPort.fetchFeedContent();
     }
 }
