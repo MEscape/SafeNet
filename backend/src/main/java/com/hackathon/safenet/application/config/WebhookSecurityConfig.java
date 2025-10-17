@@ -14,11 +14,11 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 
 /**
  * Security configuration specifically for webhook endpoints.
- * 
+ *
  * <p>This configuration handles webhook endpoints with Basic Authentication only.
  * It has higher precedence (order 1) to ensure webhook requests are processed
  * before the main filter chain.</p>
- * 
+ *
  * <h3>Security Features</h3>
  * <ul>
  *   <li><strong>Basic Authentication:</strong> Username/password authentication for webhooks</li>
@@ -51,16 +51,16 @@ public class WebhookSecurityConfig {
         return http
                 // Apply only to webhook endpoints
                 .securityMatcher("/api/v1/hooks/keycloak/**")
-                
+
                 // Disable CSRF for stateless API
                 .csrf(AbstractHttpConfigurer::disable)
-                
+
                 // Configure CORS
                 .cors(cors -> cors.configurationSource(corsSecurityConfig.corsConfigurationSource()))
-                
+
                 // Configure session management
-                .sessionManagement(session -> 
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // Configure security headers
                 .headers(headers -> headers
@@ -79,17 +79,17 @@ public class WebhookSecurityConfig {
                         channel.anyRequest().requiresSecure();
                     }
                 })
-                
+
                 // Configure authorization - all webhook endpoints require authentication
                 .authorizeHttpRequests(auth -> auth
-                    .anyRequest().authenticated()
+                        .anyRequest().authenticated()
                 )
-                
+
                 // Configure Basic Authentication only
                 .httpBasic(httpBasic -> httpBasic
-                    .realmName("Webhook Authentication")
+                        .realmName("Webhook Authentication")
                 )
-                
+
                 .build();
     }
 }

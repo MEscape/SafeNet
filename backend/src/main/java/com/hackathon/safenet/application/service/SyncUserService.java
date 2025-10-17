@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Application service for synchronizing user data between Keycloak and the local database.
@@ -27,7 +28,7 @@ import java.util.Map;
  * 
  * <h3>Business Rules</h3>
  * <ul>
- *   <li>AuthId must be unique and non-null</li>
+ *   <li>Id must be unique and non-null</li>
  *   <li>Username must be provided and non-empty</li>
  *   <li>Email must be valid format when provided</li>
  *   <li>Additional attributes are stored as JSONB metadata</li>
@@ -78,7 +79,7 @@ public class SyncUserService implements SyncUserPort {
      * 
      * <h4>Data Mapping</h4>
      * <ul>
-     *   <li>{@code authId} - Keycloak user ID (primary identifier)</li>
+     *   <li>{@code id} - Keycloak user ID (primary identifier)</li>
      *   <li>{@code username} - Keycloak username (required)</li>
      *   <li>{@code email} - User email address (optional)</li>
      *   <li>{@code firstName} - User first name (optional)</li>
@@ -86,7 +87,7 @@ public class SyncUserService implements SyncUserPort {
      *   <li>{@code attributes} - Additional user metadata stored as JSONB</li>
      * </ul>
      * 
-     * @param authId the Keycloak authentication ID (must be non-null and non-empty)
+     * @param id the Keycloak authentication ID (must be non-null and non-empty)
      * @param username the username from Keycloak (must be non-null and non-empty)
      * @param email the user's email address (optional, can be null)
      * @param firstName the user's first name (optional, can be null)
@@ -99,24 +100,24 @@ public class SyncUserService implements SyncUserPort {
      */
     @Override
     public User syncUser(
-            String authId,
+            UUID id,
             String username,
             String email,
             String firstName,
             String lastName,
             Map<String, Object> attributes) {
 
-        log.info("Syncing user from Keycloak: authId={}, username={}", authId, username);
+        log.info("Syncing user from Keycloak: id={}, username={}", id, username);
 
         // Find existing user or create new
-        User user = userRepository.findByAuthId(authId)
+        User user = userRepository.findById(id)
                 .map(existingUser -> {
-                    log.debug("User exists, updating: {}", authId);
+                    log.debug("User exists, updating: {}", id);
                     return existingUser.updateFromKeycloak(username, email, firstName, lastName, attributes);
                 })
                 .orElseGet(() -> {
-                    log.debug("User not found, creating new: {}", authId);
-                    return User.createFromKeycloak(authId, username, email, firstName, lastName, attributes);
+                    log.debug("User not found, creating new: {}", id);
+                    return User.createFromKeycloak(id, username, email, firstName, lastName, attributes);
                 });
 
         // Business validation
@@ -128,7 +129,7 @@ public class SyncUserService implements SyncUserPort {
         // Persist (upsert operation)
         User savedUser = userRepository.save(user);
 
-        log.info("User synced successfully: id={}, authId={}", savedUser.id(), savedUser.authId());
+        log.info("User synced successfully: id={}", savedUser.id());
 
         return savedUser;
     }
@@ -149,27 +150,27 @@ public class SyncUserService implements SyncUserPort {
      * </ol>
      * 
      * <p><strong>Note:</strong> This operation is idempotent - calling it multiple
-     * times with the same authId will not cause errors, even if the user has
+     * times with the same id will not cause errors, even if the user has
      * already been deleted.</p>
      * 
-     * @param authId the Keycloak authentication ID of the user to delete
-     * @throws IllegalArgumentException if authId is null or empty
+     * @param id the Keycloak authentication ID of the user to delete
+     * @throws IllegalArgumentException if id is null or empty
      * @throws RuntimeException if database operation fails
      */
     @Override
-    public void deleteUser(String authId) {
-        log.info("Deleting user: authId={}", authId);
+    public void deleteUser(UUID id) {
+        log.info("Deleting user: id={}", id);
 
-        if (authId == null || authId.isBlank()) {
-            throw new IllegalArgumentException("AuthId cannot be null or empty");
+        if (id == null) {
+            throw new IllegalArgumentException("Id cannot be null or empty");
         }
 
-        if (!userRepository.existsByAuthId(authId)) {
-            log.warn("User not found for deletion: {}", authId);
+        if (!userRepository.existsById(id)) {
+            log.warn("User not found for deletion: {}", id);
             return; // Idempotent: already deleted
         }
 
-        userRepository.deleteByAuthId(authId);
-        log.info("User deleted: authId={}", authId);
+        userRepository.deleteById(id);
+        log.info("User deleted: id={}", id);
     }
 }

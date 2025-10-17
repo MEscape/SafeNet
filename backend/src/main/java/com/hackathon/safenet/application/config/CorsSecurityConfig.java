@@ -51,29 +51,29 @@ public class CorsSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Set allowed origins from configuration
         configuration.setAllowedOrigins(Arrays.asList(
             applicationProperties.getSecurity().getCorsAllowedOrigins()));
-        
+
         // Set allowed methods
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        
+
         // Set allowed headers
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "X-Requested-With", "Accept", 
+            "Authorization", "Content-Type", "X-Requested-With", "Accept",
             "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
-        
+
         // Allow credentials
         configuration.setAllowCredentials(true);
-        
+
         // Set max age for preflight requests
         configuration.setMaxAge(Duration.ofHours(1));
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
+
         return source;
     }
 }

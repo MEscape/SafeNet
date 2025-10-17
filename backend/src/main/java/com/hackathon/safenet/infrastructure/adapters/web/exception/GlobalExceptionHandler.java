@@ -1,13 +1,15 @@
 package com.hackathon.safenet.infrastructure.adapters.web.exception;
 
-import com.hackathon.safenet.domain.exception.CryptoException;
+import com.hackathon.safenet.domain.exception.*;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -108,7 +110,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Validation Failed")
+                .error("error.validation.failed")
                 .message("Request validation failed")
                 .path(getPath(request))
                 .details(fieldErrors)
@@ -132,7 +134,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Constraint Violation")
+                .error("error.constraint.violation")
                 .message("Request constraints violated")
                 .path(getPath(request))
                 .details(violations)
@@ -152,7 +154,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Authentication Failed")
+                .error("error.authentication.failed")
                 .message("Authentication credentials are missing or invalid")
                 .path(getPath(request))
                 .build();
@@ -171,7 +173,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
-                .error("Access Denied")
+                .error("error.authorization.denied")
                 .message("You don't have permission to access this resource")
                 .path(getPath(request))
                 .build();
@@ -190,8 +192,8 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Cryptographic Error")
-                .message("Invalid signature or cryptographic operation failed")
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
                 .path(getPath(request))
                 .build();
         
@@ -209,7 +211,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
+                .error("error.resource.not_found")
                 .message("The requested resource was not found")
                 .path(getPath(request))
                 .build();
@@ -228,13 +230,196 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Invalid Argument")
+                .error("error.invalid.argument")
                 .message(ex.getMessage())
                 .path(getPath(request))
                 .build();
         
         log.warn("Invalid argument: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    /**
+     * Handle friend request not found exceptions.
+     * 
+     * @param ex the exception
+     * @param request the web request
+     * @return error response with NOT_FOUND status
+     */
+    @ExceptionHandler(FriendRequestNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFriendRequestNotFound(
+            FriendRequestNotFoundException ex, WebRequest request) {
+        log.warn("Friend request not found: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+    
+    /**
+     * Handle duplicate friend request exceptions.
+     * 
+     * @param ex the exception
+     * @param request the web request
+     * @return error response with CONFLICT status
+     */
+    @ExceptionHandler(DuplicateFriendRequestException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateFriendRequest(
+            DuplicateFriendRequestException ex, WebRequest request) {
+        log.warn("Duplicate friend request: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+    
+    /**
+     * Handle invalid friend request operation exceptions.
+     * 
+     * @param ex the exception
+     * @param request the web request
+     * @return error response with BAD_REQUEST status
+     */
+    @ExceptionHandler(InvalidFriendRequestOperationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFriendRequestOperation(
+            InvalidFriendRequestOperationException ex, WebRequest request) {
+        log.warn("Invalid friend request operation: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+    
+    /**
+     * Handle friendship not found exceptions.
+     * 
+     * @param ex the exception
+     * @param request the web request
+     * @return error response with NOT_FOUND status
+     */
+    @ExceptionHandler(FriendshipNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFriendshipNotFound(
+            FriendshipNotFoundException ex, WebRequest request) {
+        log.warn("Friendship not found: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+    
+    /**
+     * Handle general friendship exceptions.
+     * 
+     * @param ex the exception
+     * @param request the web request
+     * @return error response with BAD_REQUEST status
+     */
+    @ExceptionHandler(FriendshipException.class)
+    public ResponseEntity<ErrorResponse> handleFriendshipException(
+            FriendshipException ex, WebRequest request) {
+        log.warn("Friendship exception: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle database transaction exceptions
+     */
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ErrorResponse> handleTransactionSystemException(
+            TransactionSystemException ex, WebRequest request) {
+        
+        String message = "Database transaction failed";
+        String errorCode = "error.transaction.failed";
+        
+        // Try to extract more specific error information
+        Throwable rootCause = ex.getRootCause();
+        if (rootCause instanceof ConstraintViolationException) {
+            message = "Data validation constraints violated";
+            errorCode = "error.constraint.violation";
+        } else if (rootCause != null && rootCause.getMessage() != null) {
+            if (rootCause.getMessage().contains("duplicate key") || 
+                rootCause.getMessage().contains("unique constraint")) {
+                message = "Duplicate data detected - record already exists";
+                errorCode = "error.duplicate.data";
+            }
+        }
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error(errorCode)
+                .message(message)
+                .path(getPath(request))
+                .build();
+        
+        log.error("Transaction system exception: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
+     * Handle database integrity constraint violations
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, WebRequest request) {
+        
+        String message = "Data integrity constraint violated";
+        String errorCode = "error.data.integrity";
+        
+        if (ex.getMessage() != null) {
+            if (ex.getMessage().contains("duplicate key") || 
+                ex.getMessage().contains("unique constraint")) {
+                message = "Duplicate data detected - record already exists";
+                errorCode = "error.duplicate.data";
+            } else if (ex.getMessage().contains("not-null constraint")) {
+                message = "Required field is missing";
+                errorCode = "error.required.field";
+            }
+        }
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error(errorCode)
+                .message(message)
+                .path(getPath(request))
+                .build();
+        
+        log.error("Data integrity violation: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     /**
@@ -247,7 +432,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Internal Server Error")
+                .error("error.internal")
                 .message("An unexpected error occurred")
                 .path(getPath(request))
                 .build();

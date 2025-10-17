@@ -182,3 +182,4 @@ Then configure the frontend client:
 | Run iOS (macOS only)   | `npm run ios`                      |
 | Lint & Type check      | `npm run lint && npm run ts:check` |
 | Rebuild native project | `expo prebuild --clean`            |
+ | Fix Path Length Error | https://github.com/AppAndFlow/react-native-safe-area-context/issues/424#issuecomment-2454869033 |

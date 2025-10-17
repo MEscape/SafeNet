@@ -22,23 +22,23 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
     /**
      * Retrieves a {@link UserEntity} by its authentication ID.
      *
-     * @param authId the authentication ID of the user
+     * @param id the authentication ID of the user
      * @return an {@link Optional} containing the {@link UserEntity} if found, or empty if not found
      */
-    Optional<UserEntity> findByAuthId(String authId);
+    Optional<UserEntity> findById(UUID id);
 
     /**
      * Checks whether a {@link UserEntity} exists with the given authentication ID.
      *
-     * @param authId the authentication ID to check
-     * @return {@code true} if a user with the given authId exists, {@code false} otherwise
+     * @param id the authentication ID to check
+     * @return {@code true} if a user with the given id exists, {@code false} otherwise
      */
-    boolean existsByAuthId(String authId);
+    boolean existsById(UUID id);
 
     /**
      * Deletes a {@link UserEntity} by its authentication ID.
      *
-     * @param authId the authentication ID of the user to delete
+     * @param id the authentication ID of the user to delete
      */
-    void deleteByAuthId(String authId);
+    void deleteById(UUID id);
 }
