@@ -25,20 +25,22 @@
 
   "clients": [
     {
-      "clientId": "frontend-app",
+      "clientId": "${KEYCLOAK_CLIENT_ID}",
       "name": "Frontend Application",
       "enabled": true,
-      "publicClient": true,
+      "publicClient": false,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
       "redirectUris": [
         "safenet:///",
-        "http://localhost:8081/*"
+        "http://localhost:8081/*",
+        "http://localhost:8080/swagger-ui/oauth2-redirect.html"
       ],
       "webOrigins": [
-        "safenet:///",
-        "http://localhost:8081"
+        "http://localhost:8081",
+        "http://localhost:8080"
       ]
     }
   ],
@@ -74,8 +76,8 @@
       "linkOnly": false,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
-        "clientId": "123456789-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com",
-        "clientSecret": "GOCSPX-abcdefghijklmnopqrstuvwxyz123456",
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
         "syncMode": "IMPORT",
         "useJwksUrl": "true"
       }

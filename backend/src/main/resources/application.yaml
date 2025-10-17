@@ -39,10 +39,27 @@ spring:
   # OAuth2 Resource Server configuration
   security:
     oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:${SERVER_PORT}/swagger-ui/oauth2-redirect.html
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI}
+            authorization-uri: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
       resourceserver:
-        jwt:
-          # Keycloak issuer URI - fetches JWKS automatically
-          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+        opaquetoken:
+          introspection-uri: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/token/introspect
+          client-id: ${KEYCLOAK_CLIENT_ID}
+          client-secret: ${KEYCLOAK_CLIENT_SECRET}
 
 # Server configuration
 server:
@@ -65,36 +82,38 @@ management:
 
 # OpenAPI documentation
 springdoc:
-  api-docs:
-    path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-    tags-sorter: alpha
+    oauth:
+      use-pkce-with-authorization-code-grant: true
+      use-basic-authentication-with-access-code-grant: true
+
+    # UI Configuration
+    persist-authorization: true
 
 safenet:
-  # App configuration
-  app:
-    name: ${spring.application.name}
-    version: "1.0.0"
-    description: "SafePath ist eine mobile/webbasierte App, die in Katastrophenfällen sichere Evakuierungsrouten anzeigt, Statusmeldungen ermöglicht und die Koordination von Betroffenen und Rettungskräften unterstützt."
-    port: ${SERVER_PORT}
-    production-server-url: "http://localhost:8080"
-    contact:
-      name: "${spring.application.name} Team"
-      email: "safenet.hackathon26@gmail.com"
-      url: "https://github.com/MEscape/SafeNet"
-    license:
-      name: "Apache 2.0"
-      url: "https://www.apache.org/licenses/LICENSE-2.0.html"
+  # OpenAPI documentation
+  springdoc:
+    api-docs:
+      title: ${spring.application.name}
+      description: SafePath ist eine mobile/webbasierte App, die in Katastrophenfällen sichere Evakuierungsrouten anzeigt, Statusmeldungen ermöglicht und die Koordination von Betroffenen und Rettungskräften unterstützt.
+      app-version: 1.0
+      external-docs:
+        - description: "OpenID Provider Configuration"
+          url: "http://localhost:8081/realms/safenet/.well-known/openid-configuration"
+
+    swagger-ui:
+      oauth:
+        authorization-url: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/auth
+        token-url: ${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/token
 
   # Security configuration
   security:
     https-only: false
     cors-allowed-origins:
+      - "http://localhost:8080"
       - "http://localhost:8081"
     jwt:
-      issuer-uri: "http://localhost:8080/realms/myrealm"
+      issuer-uri: ${KEYCLOAK_ISSUER_URI}
       audience: "safenet-backend"
       clock-skew: 60               # Sekunden (Default 60)
 

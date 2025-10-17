@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -20,28 +21,28 @@ public class UserJpaAdapter implements UserRepositoryPort {
     private final EntityMapper<User, UserEntity> userMapper;
 
     @Override
-    public Optional<User> findByAuthId(String authId) {
-        log.debug("Finding user by authId: {}", authId);
-        return jpaRepository.findByAuthId(authId)
+    public Optional<User> findById(UUID id) {
+        log.debug("Finding user by id: {}", id);
+        return jpaRepository.findById(id)
                 .map(userMapper::toDomain);
     }
 
     @Override
     public User save(User user) {
-        log.debug("Saving user: authId={}", user.authId());
+        log.debug("Saving user: id={}", user.id());
         UserEntity entity = userMapper.toEntity(user);
         UserEntity saved = jpaRepository.save(entity);
         return userMapper.toDomain(saved);
     }
 
     @Override
-    public void deleteByAuthId(String authId) {
-        log.debug("Deleting user by authId: {}", authId);
-        jpaRepository.deleteByAuthId(authId);
+    public void deleteById(UUID id) {
+        log.debug("Deleting user by id: {}", id);
+        jpaRepository.deleteById(id);
     }
 
     @Override
-    public boolean existsByAuthId(String authId) {
-        return jpaRepository.existsByAuthId(authId);
+    public boolean existsById(UUID id) {
+        return jpaRepository.existsById(id);
     }
 }

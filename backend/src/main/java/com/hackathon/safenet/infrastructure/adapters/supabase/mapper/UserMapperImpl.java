@@ -5,9 +5,6 @@ import com.hackathon.safenet.infrastructure.adapters.supabase.entity.UserEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Mapper component for converting between User domain model and UserEntity
@@ -23,12 +20,11 @@ public class UserMapperImpl implements EntityMapper<User, UserEntity> {
 
         return new User(
                 entity.getId(),
-                entity.getAuthId(),
                 entity.getUsername(),
                 entity.getEmail(),
                 entity.getFirstName(),
                 entity.getLastName(),
-                entity.getMeta() != null ? Collections.unmodifiableMap(entity.getMeta()) : Map.of(),
+                entity.getMeta(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -42,14 +38,13 @@ public class UserMapperImpl implements EntityMapper<User, UserEntity> {
 
         return UserEntity.builder()
                 .id(domain.id())
-                .authId(domain.authId())
                 .username(domain.username())
                 .email(domain.email())
                 .firstName(domain.firstName())
                 .lastName(domain.lastName())
-                .meta(domain.meta() != null ? new HashMap<>(domain.meta()) : Map.of())
+                .meta(domain.meta())
                 .createdAt(domain.createdAt())
-                .updatedAt(Instant.now())
+                .updatedAt(domain.updatedAt() != null ? domain.updatedAt() : Instant.now())
                 .build();
     }
 }

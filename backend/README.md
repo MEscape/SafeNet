@@ -66,7 +66,9 @@ MAX_LIFETIME=1800000
 # ================================
 # Security Configuration
 # ================================
-KEYCLOAK_ISSUER_URI=https://localhost:8081/realms/safenet
+KEYCLOAK_ISSUER_URI=http://localhost:8081/realms/safenet
+KEYCLOAK_CLIENT_ID=frontend-app
+KEYCLOAK_CLIENT_SECRET=s3cureR@nd0mStr1ng123!
 WEBHOOK_HTTP_AUTH_USERNAME=keycloak-webhook
 WEBHOOK_HTTP_AUTH_PASSWORD=a8F4vP9zR2qM1xYtG6kL0bN3sE7uHjD5
 
@@ -75,6 +77,12 @@ WEBHOOK_HTTP_AUTH_PASSWORD=a8F4vP9zR2qM1xYtG6kL0bN3sE7uHjD5
 # ================================
 MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
 MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=when_authorized
+
+# ================================
+# Google OAuth2 Configuration
+# ================================
+GOOGLE_CLIENT_ID=change-me
+GOOGLE_CLIENT_SECRET=change-me
 
 # ================================
 # Docker Configuration

@@ -23,7 +23,7 @@ services:
     networks:
       - safe-net-network
 
-  # Keycloak Identity Provider
+    # Keycloak Identity Provider
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
@@ -51,6 +51,12 @@ services:
       WEBHOOK_HTTP_BASE_PATH: "http://host.docker.internal:8080/api/v1/hooks/keycloak/user-event"
       WEBHOOK_HTTP_AUTH_USERNAME: ${WEBHOOK_HTTP_AUTH_USERNAME}
       WEBHOOK_HTTP_AUTH_PASSWORD: ${WEBHOOK_HTTP_AUTH_PASSWORD}
+
+      # Realm Environment Variables
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
     entrypoint: /bin/sh
     command:

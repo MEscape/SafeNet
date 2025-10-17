@@ -1,5 +1,6 @@
 package com.hackathon.safenet.infrastructure.adapters.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
@@ -7,22 +8,11 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * Data Transfer Object for Keycloak Event Webhook
- * Keycloak event structure (simplified):
- * {
- *   "type": "REGISTER",
- *   "realmId": "my-realm",
- *   "userId": "abc-123",
- *   "time": 1234567890,
- *   "details": {
- *     "username": "john.doe",
- *     "email": "john@example.com",
- *     "first_name": "John",
- *     "last_name": "Doe"
- *   }
- * }
+ * Data Transfer Object for Keycloak Event Webhook.
+ * Captures known fields and also unknown fields for logging/debugging.
  */
 @Data
 public class KeycloakEventDto {
@@ -33,8 +23,7 @@ public class KeycloakEventDto {
     @JsonProperty("realmId")
     private String realmId;
 
-    @JsonProperty("userId")
-    private String userId;
+    private UUID userId;
 
     @JsonProperty("time")
     private Long time;
@@ -42,40 +31,52 @@ public class KeycloakEventDto {
     @JsonProperty("details")
     private Map<String, Object> details;
 
+    @Getter(AccessLevel.NONE)
     @JsonProperty("representation")
     private String representation;
+
+    @JsonAnySetter
+    public void setOtherField(String key, Object value) {
+        System.out.println("All fields received: " + key + " = " + value);
+    }
+
+    public UUID getUserId() {
+        Map<String, Object> detailsMap = getDetails();
+        if (detailsMap != null && detailsMap.containsKey("id")) {
+            try {
+                return UUID.fromString(detailsMap.get("id").toString());
+            } catch (Exception e) {
+            }
+        }
+        return null;
+    }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> getDetails() {
         if (details != null) {
             return details;
         }
-
         if (representation != null) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 return mapper.readValue(representation, Map.class);
             } catch (Exception e) {
-                e.printStackTrace();
             }
         }
-
         return null;
     }
 
     /**
-     * Check if this is a user registration or update event
+     * Check if this is a user registration or update event.
      */
     public boolean isUserSyncEvent() {
-        return type != null && (
-                type.equals("REGISTER") || type.equals("USER-UPDATE")
-        );
+        return ("REGISTER".equals(type) || "USER-UPDATE".equals(type));
     }
 
     /**
-     * Check if this is a user deletion event
+     * Check if this is a user deletion event.
      */
     public boolean isUserDeleteEvent() {
-        return type != null && type.equals("USER-DELETE");
+        return "USER-DELETE".equals(type);
     }
 }

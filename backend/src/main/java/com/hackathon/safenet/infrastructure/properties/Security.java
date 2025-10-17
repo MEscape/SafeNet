@@ -19,7 +19,7 @@ public class Security {
     @Data
     public static class Jwt {
         @NotBlank
-        private String issuerUri = "http://localhost:8080/realms/myrealm";
+        private String issuerUri = "http://localhost:8081/realms/myrealm";
 
         private String audience;
 

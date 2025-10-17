@@ -11,11 +11,11 @@ import org.springframework.validation.annotation.Validated;
 public class ApplicationProperties {
 
     @NotNull
-    private App app = new App();
-
-    @NotNull
     private Security security = new Security();
 
     @NotNull
     private Keycloak keycloak = new Keycloak();
+
+    @NotNull
+    private SpringDoc springDoc = new SpringDoc();
 }

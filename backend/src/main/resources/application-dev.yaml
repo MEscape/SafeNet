@@ -7,14 +7,12 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: create-drop  # Dev only: recreate schema on startup
-
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8081/realms/myrealm
+      ddl-auto: update
 
 logging:
   level:
     com.hackathon.safenet: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.server.resource: TRACE
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.boot.autoconfigure.security.oauth2: DEBUG

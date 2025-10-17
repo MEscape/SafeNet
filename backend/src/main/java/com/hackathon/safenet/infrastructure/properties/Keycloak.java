@@ -15,7 +15,7 @@ public class Keycloak {
         // Basic Authentication configuration
         @NotBlank
         private String username = "admin";
-        
+
         @NotBlank
         private String password = "password";
     }
